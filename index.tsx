@@ -1,35 +1,30 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
-import { FileUp, Download, Plus, FileText, X, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { FileUp, Download, Plus, FileText, X, ChevronUp, ChevronDown, GripVertical, MousePointer2 } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-// --- Types ---
+// --- Configuration & Constants ---
+const PDFJS_VERSION = '4.10.38';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
+
 type FontType = 'Helvetica' | 'Times-Roman' | 'Courier';
+const FONTS: FontType[] = ['Helvetica', 'Times-Roman', 'Courier'];
 
 interface TextOverlay {
   id: string;
   pageNumber: number;
   text: string;
-  x: number; // % from left
-  y: number; // % from top
+  x: number; // Percent 0-100
+  y: number; // Percent 0-100
   fontSize: number;
   fontFamily: FontType;
   color: string;
   isNew?: boolean;
 }
 
-// --- Config ---
-const PDFJS_VERSION = '4.10.38';
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
-const FONTS: FontType[] = ['Helvetica', 'Times-Roman', 'Courier'];
-
-// --- Components ---
-
-/**
- * TextBox: Individual annotation component
- */
+// --- TextBox Component ---
 const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerDimensions, scale }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -45,7 +40,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isEditing || (e.target as HTMLElement).closest('button')) return;
-    onSelect(e);
+    onSelect();
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY, startX: overlay.x, startY: overlay.y };
   };
@@ -84,7 +79,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
       style={{ left: `${overlay.x}%`, top: `${overlay.y}%`, transform: `translateY(calc(-100% + 10px))`, fontSize: `${overlay.fontSize * scale}px`, ...getFontStyle(), color: overlay.color }}
       onMouseDown={handleMouseDown} onDoubleClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
     >
-      <div className={`relative min-w-[60px] p-2 border-2 rounded transition-all flex items-start ${showControls ? 'border-blue-500 bg-white shadow-xl ring-2 ring-blue-100' : 'border-transparent group-hover:border-blue-300 group-hover:bg-white/60'} ${isDragging ? 'cursor-grabbing opacity-80 scale-105' : 'cursor-grab'}`}>
+      <div className={`relative min-w-[60px] p-2 border-2 rounded transition-all flex items-start ${showControls ? 'border-blue-500 bg-white custom-shadow ring-2 ring-blue-100' : 'border-transparent group-hover:border-blue-300 group-hover:bg-white/60'} ${isDragging ? 'cursor-grabbing opacity-80 scale-105' : 'cursor-grab'}`}>
         {isEditing ? (
           <textarea 
             ref={inputRef} rows={1} className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight p-0 m-0 border-none block"
@@ -97,7 +92,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
         )}
 
         {showControls && !isDragging && (
-          <div className="absolute -top-12 left-0 flex items-center bg-gray-900 text-white rounded-lg shadow-xl px-2 py-1 space-x-2">
+          <div className="absolute -top-12 left-0 flex items-center bg-gray-900 text-white rounded-lg shadow-2xl px-2 py-1 space-x-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <select value={overlay.fontFamily} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => onUpdate({ fontFamily: e.target.value as FontType })} className="bg-transparent border-none text-xs text-white outline-none cursor-pointer hover:bg-white/10 px-1 rounded py-0.5">
               {FONTS.map(f => <option key={f} value={f} className="bg-gray-800">{f}</option>)}
             </select>
@@ -122,9 +117,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
   );
 };
 
-/**
- * PageItem: Single PDF Page renderer
- */
+// --- PageItem Component ---
 const PageItem = ({ pageNumber, pdfDoc, overlays, addOverlay, updateOverlay, deleteOverlay, selectedId, setSelectedId, scale }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -168,22 +161,20 @@ const PageItem = ({ pageNumber, pdfDoc, overlays, addOverlay, updateOverlay, del
       ref={containerRef} className={`pdf-canvas-container bg-white relative transition-opacity duration-300 ${isRendered ? 'opacity-100' : 'opacity-0'}`}
       style={{ width: dimensions.width || 'auto', height: dimensions.height || 'auto' }} onClick={handlePageClick}
     >
-      <canvas ref={canvasRef} className="block shadow-xl cursor-crosshair" />
+      <canvas ref={canvasRef} className="block cursor-crosshair" />
       {isRendered && (
         <div className="text-overlay-layer">
           {overlays.map(o => (
-            <TextBox key={o.id} overlay={o} isSelected={selectedId === o.id} onSelect={(e) => { e.stopPropagation(); setSelectedId(o.id); }} onUpdate={(u) => updateOverlay(o.id, u)} onDelete={() => deleteOverlay(o.id)} containerDimensions={dimensions} scale={scale} />
+            <TextBox key={o.id} overlay={o} isSelected={selectedId === o.id} onSelect={() => setSelectedId(o.id)} onUpdate={(u) => updateOverlay(o.id, u)} onDelete={() => deleteOverlay(o.id)} containerDimensions={dimensions} scale={scale} />
           ))}
         </div>
       )}
-      <div className="absolute -top-7 left-0 px-2 py-0.5 bg-gray-800 text-white text-[10px] font-bold uppercase rounded-t-sm">Page {pageNumber}</div>
+      <div className="absolute -top-7 left-0 px-2 py-0.5 bg-gray-800 text-white text-[10px] font-bold uppercase rounded-t-sm shadow-sm">Page {pageNumber}</div>
     </div>
   );
 };
 
-/**
- * Main App Component
- */
+// --- Main App Component ---
 const App = () => {
   const [pdfInfo, setPdfInfo] = useState<any>(null);
   const [overlays, setOverlays] = useState<TextOverlay[]>([]);
@@ -194,13 +185,11 @@ const App = () => {
   const [renderScale, setRenderScale] = useState(1.5);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Responsive Scaling
   useEffect(() => {
     const updateScale = () => { if (containerRef.current) setRenderScale(Math.min(1.5, Math.max(0.6, (containerRef.current.clientWidth - 48) / 800))); };
     updateScale(); window.addEventListener('resize', updateScale); return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // Keyboard Shortcuts (Copy/Paste/Delete)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '');
@@ -219,7 +208,6 @@ const App = () => {
     window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedId, clipboard, overlays]);
 
-  // PDF Loading
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     const bytes = new Uint8Array(await file.arrayBuffer());
@@ -229,7 +217,6 @@ const App = () => {
     setPdfDoc(pdf); setOverlays([]); setSelectedId(null);
   };
 
-  // Export Logic
   const handleExport = async () => {
     if (!pdfInfo) return;
     setIsExporting(true);
@@ -269,26 +256,52 @@ const App = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center space-x-3"><div className="bg-blue-600 p-2 rounded-lg"><FileText className="text-white w-6 h-6" /></div><h1 className="text-xl font-bold text-gray-800">PDF Annotator Pro</h1></div>
+        <div className="flex items-center space-x-3">
+          <div className="bg-blue-600 p-2 rounded-xl shadow-blue-200 shadow-lg">
+            <FileText className="text-white w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-800 tracking-tight">PDF Annotator Pro</h1>
+        </div>
         <div className="flex items-center space-x-4">
           {!pdfDoc ? (
-            <label className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 shadow-sm"><FileUp className="w-4 h-4 mr-2" /><span>Upload PDF</span><input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} /></label>
+            <label className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all font-semibold">
+              <FileUp className="w-4 h-4 mr-2" />
+              <span>Open PDF</span>
+              <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
+            </label>
           ) : (
-            <><span className="hidden md:inline text-sm text-gray-500 max-w-xs truncate font-medium">{pdfInfo.name}</span><button onClick={handleExport} disabled={isExporting} className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 shadow-sm"><Download className="w-4 h-4 mr-2" />{isExporting ? 'Exporting...' : 'Export PDF'}</button><label className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200"><FileUp className="w-4 h-4 mr-2" /><span>Replace</span><input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} /></label></>
+            <>
+              <span className="hidden lg:inline text-sm text-gray-500 max-w-xs truncate font-medium bg-gray-100 px-3 py-1.5 rounded-full">{pdfInfo.name}</span>
+              <button onClick={handleExport} disabled={isExporting} className="flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 shadow-lg shadow-green-100 transition-all font-semibold">
+                <Download className="w-4 h-4 mr-2" />
+                {isExporting ? 'Exporting...' : 'Save As PDF'}
+              </button>
+              <label className="flex items-center px-5 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-all font-semibold">
+                <FileUp className="w-4 h-4 mr-2" />
+                <span>Replace</span>
+                <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
+              </label>
+            </>
           )}
         </div>
       </header>
 
       <main className="flex-1 overflow-hidden relative flex flex-col">
         {!pdfDoc ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><Plus className="w-10 h-10 text-blue-500" /></div>
-            <h2 className="text-2xl font-bold mb-3">Annotate PDFs with ease</h2>
-            <p className="text-gray-600 mb-8 max-w-sm">Upload a document to add text boxes. Move, edit, and export your changes instantly.</p>
-            <label className="inline-flex items-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-xl cursor-pointer hover:bg-blue-700 shadow-lg transform hover:-translate-y-1 transition-all"><FileUp className="w-6 h-6 mr-3" />Choose PDF File<input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} /></label>
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white">
+            <div className="bg-blue-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-pulse">
+              <MousePointer2 className="w-12 h-12 text-blue-500" />
+            </div>
+            <h2 className="text-3xl font-extrabold mb-4 text-gray-900">Professional PDF Editing</h2>
+            <p className="text-gray-500 mb-10 max-w-md mx-auto text-lg leading-relaxed">Simply upload your document and click anywhere to add high-fidelity text annotations.</p>
+            <label className="inline-flex items-center px-10 py-5 bg-blue-600 text-white text-xl font-bold rounded-2xl cursor-pointer hover:bg-blue-700 shadow-xl shadow-blue-200 transform hover:-translate-y-1 transition-all">
+              <FileUp className="w-7 h-7 mr-3" />
+              Start Annotating
+              <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
+            </label>
           </div>
         ) : (
-          <div ref={containerRef} className="flex-1 overflow-auto bg-gray-200 p-4 md:p-8 flex flex-col items-center space-y-12" onClick={() => setSelectedId(null)}>
+          <div ref={containerRef} className="flex-1 overflow-auto bg-gray-200/50 p-6 md:p-12 flex flex-col items-center space-y-16" onClick={() => setSelectedId(null)}>
             {Array.from({ length: pdfDoc.numPages }).map((_, i) => (
               <PageItem key={i} pageNumber={i + 1} pdfDoc={pdfDoc} overlays={overlays.filter(o => o.pageNumber === i + 1)} addOverlay={(p, x, y) => { const o: TextOverlay = { id: `overlay-${Date.now()}`, pageNumber: p, text: 'New Text', x, y, fontSize: 18, fontFamily: 'Helvetica', color: '#000000', isNew: true }; setOverlays(v => [...v, o]); setSelectedId(o.id); }} updateOverlay={(id, u) => setOverlays(v => v.map(o => o.id === id ? { ...o, ...u } : o))} deleteOverlay={(id) => setOverlays(v => v.filter(o => o.id !== id))} selectedId={selectedId} setSelectedId={setSelectedId} scale={renderScale} />
             ))}
@@ -296,7 +309,14 @@ const App = () => {
         )}
       </main>
 
-      {pdfDoc && <div className="bg-white border-t p-2 text-center text-xs text-gray-500 flex items-center justify-center gap-4"><div><kbd className="px-1 py-0.5 bg-gray-100 border rounded">Click</kbd> to add</div><div><kbd className="px-1 py-0.5 bg-gray-100 border rounded">Ctrl+C/V</kbd> copy/paste</div><div><kbd className="px-1 py-0.5 bg-gray-100 border rounded">Drag</kbd> to move</div></div>}
+      {pdfDoc && (
+        <footer className="bg-white border-t border-gray-100 py-3 px-6 text-center text-xs text-gray-400 flex items-center justify-center space-x-8">
+          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Click</kbd> Add Text</div>
+          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Double Click</kbd> Edit</div>
+          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Ctrl+C/V</kbd> Copy/Paste</div>
+          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Del</kbd> Remove</div>
+        </footer>
+      )}
     </div>
   );
 };
