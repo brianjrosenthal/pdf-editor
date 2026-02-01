@@ -10,10 +10,12 @@
     <meta name="description" content="Professional PDF Annotation Tool - Add text and signatures easily.">
     <meta name="theme-color" content="#2563eb">
 
-    <!-- Tailwind Play CDN with configuration -->
+    <!-- Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Babel standalone: Transpiles TSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script>
-        // Suppress the production warning by providing a formal configuration
         tailwind.config = {
             theme: {
                 extend: {
@@ -33,48 +35,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style type="text/css">
-        body {
-            background-color: #f3f4f6;
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-        }
-        #root {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .pdf-canvas-container {
-            position: relative;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .text-overlay-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        .text-box-item {
-            pointer-events: all;
-            touch-action: none;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
-        }
+        body { background-color: #f3f4f6; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        #root { height: 100vh; display: flex; flex-direction: column; }
+        .pdf-canvas-container { position: relative; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .text-overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .text-box-item { pointer-events: all; touch-action: none; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
     </style>
 
     <script type="importmap">
@@ -93,8 +62,18 @@
 </script>
 </head>
 <body>
-    <div id="root"></div>
-    <!-- CRITICAL: Entry point script for the React application -->
-    <script type="module" src="./index.tsx"></script>
+    <div id="root">
+        <div class="flex items-center justify-center h-full text-gray-400 animate-pulse">
+            Loading Annotator Engine...
+        </div>
+    </div>
+    
+    <!-- Using Babel to handle the TSX transformation in the browser -->
+    <script 
+        type="text/babel" 
+        data-type="module" 
+        data-presets="typescript,react" 
+        src="./index.tsx">
+    </script>
 </body>
 </html>

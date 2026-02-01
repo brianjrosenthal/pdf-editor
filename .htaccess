@@ -1,0 +1,9 @@
+
+# Ensure .tsx and .ts files are served as JavaScript
+AddType application/javascript .ts
+AddType application/javascript .tsx
+
+# Enable compression for faster loading
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>
