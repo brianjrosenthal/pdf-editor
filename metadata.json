@@ -1,0 +1,5 @@
+{
+  "name": "PDF Text Annotator Pro",
+  "description": "A feature-rich PDF editor that allows users to upload PDFs, add custom draggable and editable text boxes with multiple font options, and export the annotated document as a new PDF.",
+  "requestFramePermissions": []
+}
