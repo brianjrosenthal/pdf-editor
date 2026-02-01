@@ -1,9 +1,27 @@
 
-# Ensure .tsx and .ts files are served as JavaScript
-AddType application/javascript .ts
-AddType application/javascript .tsx
+# 1. Force the correct MIME type for JavaScript/TypeScript files
+# This helps browsers that enforce strict MIME checking for modules.
+<IfModule mod_mime.c>
+  AddType application/javascript .ts
+  AddType application/javascript .tsx
+  AddType application/javascript .js
+  AddType application/javascript .jsx
+</IfModule>
 
-# Enable compression for faster loading
+# 2. Force the Content-Type header explicitly for these extensions
+<FilesMatch "\.(ts|tsx|js|jsx)$">
+  <IfModule mod_headers.c>
+    Header set Content-Type "application/javascript"
+  </IfModule>
+</FilesMatch>
+
+# 3. Allow Cross-Origin Resource Sharing (CORS)
+# Required for ES Modules and some CDN interactions.
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+# 4. Enable compression to speed up the loading of large PDF/Babel libraries
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
 </IfModule>

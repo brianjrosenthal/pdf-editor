@@ -10,10 +10,11 @@
     <meta name="description" content="Professional PDF Annotation Tool - Add text and signatures easily.">
     <meta name="theme-color" content="#2563eb">
 
-    <!-- Dependencies -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Babel standalone: Transpiles TSX in the browser -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Use a stable, specific version of Babel Standalone to avoid internal environment detection bugs -->
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -26,7 +27,20 @@
                     },
                 }
             }
-        }
+        };
+
+        // Force Babel to treat modules correctly and avoid the "esmodules" boolean error
+        // This configuration is picked up by Babel when processing type="text/babel"
+        window.babelConfig = {
+            presets: [
+                ['env', { 
+                    modules: false, 
+                    targets: { esmodules: true } 
+                }],
+                'typescript',
+                'react'
+            ]
+        };
     </script>
 
     <!-- Google Fonts -->
@@ -63,16 +77,23 @@
 </head>
 <body>
     <div id="root">
-        <div class="flex items-center justify-center h-full text-gray-400 animate-pulse">
-            Loading Annotator Engine...
+        <div class="flex items-center justify-center h-full text-gray-400">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-sm font-medium">Bootstrapping Annotator Engine...</p>
+                <p class="text-xs text-gray-400 mt-2">Transpiling assets for your environment</p>
+            </div>
         </div>
     </div>
     
-    <!-- Using Babel to handle the TSX transformation in the browser -->
+    <!-- 
+      type="text/babel" bypasses strict MIME type checking because Babel fetches the file as plain text.
+      data-type="module" allows using 'import' statements inside the TSX file.
+    -->
     <script 
         type="text/babel" 
-        data-type="module" 
-        data-presets="typescript,react" 
+        data-type="module"
+        data-presets="env,typescript,react"
         src="./index.tsx">
     </script>
 </body>
