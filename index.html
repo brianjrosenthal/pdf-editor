@@ -4,42 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PDF Text Annotator Pro</title>
+    <title>PDF Annotator Pro</title>
     
+    <!-- Meta -->
     <meta name="description" content="Professional PDF Annotation Tool">
     <meta name="theme-color" content="#2563eb">
 
-    <!-- Tailwind CSS -->
+    <!-- Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Babel Standalone (Stable Version) -->
-    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['Roboto Mono', 'monospace'],
-                        serif: ['Playfair Display', 'serif'],
-                    },
-                }
-            }
-        };
-
-        // Explicitly prevent CommonJS transformation
-        window.babelConfig = {
-            presets: [
-                ['env', { modules: false }],
-                'typescript',
-                'react'
-            ],
-            sourceType: "module"
-        };
-    </script>
-
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -54,8 +26,14 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        
+        /* Animation for controls */
+        .controls-enter { opacity: 0; transform: translateY(10px); }
+        .controls-enter-active { opacity: 1; transform: translateY(0); transition: all 200ms ease-out; }
     </style>
 
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     <script type="importmap">
 {
   "imports": {
@@ -76,15 +54,15 @@
         <div class="flex items-center justify-center h-full text-gray-400">
             <div class="text-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p class="text-sm font-medium">Bootstrapping Annotator...</p>
+                <p class="text-sm font-medium">Launching PDF Annotator...</p>
             </div>
         </div>
     </div>
     
-    <!-- Single entry point for all logic to ensure perfect transpilation -->
     <script 
         type="text/babel" 
         data-type="module"
+        data-presets="typescript,react"
         src="./index.tsx">
     </script>
 </body>
