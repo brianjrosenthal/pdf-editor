@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PDF Annotator Pro</title>
     
-    <!-- Professional Typography and Styles -->
+    <!-- Design Tokens -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,19 +15,16 @@
     <style type="text/css">
         body { background-color: #f3f4f6; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
         #root { height: 100vh; display: flex; flex-direction: column; }
-        .pdf-canvas-container { position: relative; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); margin-bottom: 2rem; }
+        .pdf-canvas-container { position: relative; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); margin-bottom: 2.5rem; }
         .text-overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .text-box-item { pointer-events: all; touch-action: none; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-        
-        .custom-shadow { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
     </style>
 
-    <!-- Dependencies -->
-    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+    <!-- Import Map (No local files) -->
     <script type="importmap">
 {
   "imports": {
@@ -37,8 +34,8 @@
     "lucide-react": "https://esm.sh/lucide-react@0.469.0",
     "pdfjs-dist": "https://esm.sh/pdfjs-dist@4.10.38",
     "pdf-lib": "https://esm.sh/pdf-lib@1.17.1",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
@@ -48,11 +45,12 @@
         <div class="flex items-center justify-center h-full text-gray-400">
             <div class="text-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p class="text-sm font-medium">Booting Annotator Engine...</p>
+                <p class="text-sm font-medium">Mounting Annotator...</p>
             </div>
         </div>
     </div>
     
+    <!-- Single entry point -->
     <script 
         type="text/babel" 
         data-type="module"

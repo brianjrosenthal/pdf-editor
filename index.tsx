@@ -5,7 +5,7 @@ import { FileUp, Download, Plus, FileText, X, ChevronUp, ChevronDown, GripVertic
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-// --- Configuration & Constants ---
+// --- Configuration ---
 const PDFJS_VERSION = '4.10.38';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
 
@@ -16,8 +16,8 @@ interface TextOverlay {
   id: string;
   pageNumber: number;
   text: string;
-  x: number; // Percent 0-100
-  y: number; // Percent 0-100
+  x: number; 
+  y: number; 
   fontSize: number;
   fontFamily: FontType;
   color: string;
@@ -71,15 +71,13 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
     }
   };
 
-  const showControls = isSelected || isEditing;
-
   return (
     <div 
-      className={`absolute text-box-item group ${showControls ? 'z-50' : 'z-10'}`}
+      className={`absolute text-box-item group ${(isSelected || isEditing) ? 'z-50' : 'z-10'}`}
       style={{ left: `${overlay.x}%`, top: `${overlay.y}%`, transform: `translateY(calc(-100% + 10px))`, fontSize: `${overlay.fontSize * scale}px`, ...getFontStyle(), color: overlay.color }}
       onMouseDown={handleMouseDown} onDoubleClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
     >
-      <div className={`relative min-w-[60px] p-2 border-2 rounded transition-all flex items-start ${showControls ? 'border-blue-500 bg-white custom-shadow ring-2 ring-blue-100' : 'border-transparent group-hover:border-blue-300 group-hover:bg-white/60'} ${isDragging ? 'cursor-grabbing opacity-80 scale-105' : 'cursor-grab'}`}>
+      <div className={`relative min-w-[60px] p-2 border-2 rounded transition-all flex items-start ${(isSelected || isEditing) ? 'border-blue-500 bg-white shadow-xl ring-2 ring-blue-100' : 'border-transparent group-hover:border-blue-300 group-hover:bg-white/60'} ${isDragging ? 'cursor-grabbing opacity-80 scale-105' : 'cursor-grab'}`}>
         {isEditing ? (
           <textarea 
             ref={inputRef} rows={1} className="w-full bg-transparent outline-none resize-none overflow-hidden leading-tight p-0 m-0 border-none block"
@@ -91,7 +89,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
           <div className="whitespace-pre-wrap break-all pointer-events-none select-none p-0 m-0 block" style={{ lineHeight: '1.25' }}>{overlay.text || <span className="italic text-gray-400">Empty</span>}</div>
         )}
 
-        {showControls && !isDragging && (
+        {(isSelected || isEditing) && !isDragging && (
           <div className="absolute -top-12 left-0 flex items-center bg-gray-900 text-white rounded-lg shadow-2xl px-2 py-1 space-x-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <select value={overlay.fontFamily} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => onUpdate({ fontFamily: e.target.value as FontType })} className="bg-transparent border-none text-xs text-white outline-none cursor-pointer hover:bg-white/10 px-1 rounded py-0.5">
               {FONTS.map(f => <option key={f} value={f} className="bg-gray-800">{f}</option>)}
@@ -107,7 +105,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
         )}
 
         <button 
-          className={`absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-all z-[60] ${showControls ? 'scale-100 opacity-100' : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'}`}
+          className={`absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-all z-[60] ${(isSelected || isEditing) ? 'scale-100 opacity-100' : 'scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100'}`}
           onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(); }}
         >
           <X className="w-3 h-3 stroke-[3]" />
@@ -117,7 +115,7 @@ const TextBox = ({ overlay, isSelected, onSelect, onUpdate, onDelete, containerD
   );
 };
 
-// --- PageItem Component ---
+// --- Page Component ---
 const PageItem = ({ pageNumber, pdfDoc, overlays, addOverlay, updateOverlay, deleteOverlay, selectedId, setSelectedId, scale }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -169,19 +167,18 @@ const PageItem = ({ pageNumber, pdfDoc, overlays, addOverlay, updateOverlay, del
           ))}
         </div>
       )}
-      <div className="absolute -top-7 left-0 px-2 py-0.5 bg-gray-800 text-white text-[10px] font-bold uppercase rounded-t-sm shadow-sm">Page {pageNumber}</div>
+      <div className="absolute -top-7 left-0 px-2 py-0.5 bg-gray-800 text-white text-[10px] font-bold uppercase rounded-t-sm">Page {pageNumber}</div>
     </div>
   );
 };
 
-// --- Main App Component ---
+// --- App Component ---
 const App = () => {
   const [pdfInfo, setPdfInfo] = useState<any>(null);
   const [overlays, setOverlays] = useState<TextOverlay[]>([]);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [clipboard, setClipboard] = useState<TextOverlay | null>(null);
   const [renderScale, setRenderScale] = useState(1.5);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -189,24 +186,6 @@ const App = () => {
     const updateScale = () => { if (containerRef.current) setRenderScale(Math.min(1.5, Math.max(0.6, (containerRef.current.clientWidth - 48) / 800))); };
     updateScale(); window.addEventListener('resize', updateScale); return () => window.removeEventListener('resize', updateScale);
   }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '');
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedId && !isInput) {
-        const item = overlays.find(o => o.id === selectedId);
-        if (item) setClipboard({ ...item });
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboard && !isInput) {
-        const newOverlay = { ...clipboard, id: `overlay-${Date.now()}`, x: clipboard.x + 2, y: clipboard.y + 2, isNew: true };
-        setOverlays(prev => [...prev, newOverlay]); setSelectedId(newOverlay.id);
-      }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !isInput) {
-        setOverlays(prev => prev.filter(o => o.id !== selectedId)); setSelectedId(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, clipboard, overlays]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -257,28 +236,22 @@ const App = () => {
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center space-x-3">
-          <div className="bg-blue-600 p-2 rounded-xl shadow-blue-200 shadow-lg">
-            <FileText className="text-white w-6 h-6" />
-          </div>
+          <div className="bg-blue-600 p-2 rounded-xl shadow-blue-200 shadow-lg"><FileText className="text-white w-6 h-6" /></div>
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">PDF Annotator Pro</h1>
         </div>
         <div className="flex items-center space-x-4">
           {!pdfDoc ? (
             <label className="flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all font-semibold">
-              <FileUp className="w-4 h-4 mr-2" />
-              <span>Open PDF</span>
+              <FileUp className="w-4 h-4 mr-2" /><span>Open PDF</span>
               <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
             </label>
           ) : (
             <>
-              <span className="hidden lg:inline text-sm text-gray-500 max-w-xs truncate font-medium bg-gray-100 px-3 py-1.5 rounded-full">{pdfInfo.name}</span>
               <button onClick={handleExport} disabled={isExporting} className="flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 shadow-lg shadow-green-100 transition-all font-semibold">
-                <Download className="w-4 h-4 mr-2" />
-                {isExporting ? 'Exporting...' : 'Save As PDF'}
+                <Download className="w-4 h-4 mr-2" />{isExporting ? 'Exporting...' : 'Save As PDF'}
               </button>
               <label className="flex items-center px-5 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-all font-semibold">
-                <FileUp className="w-4 h-4 mr-2" />
-                <span>Replace</span>
+                <FileUp className="w-4 h-4 mr-2" /><span>Replace</span>
                 <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
               </label>
             </>
@@ -293,10 +266,9 @@ const App = () => {
               <MousePointer2 className="w-12 h-12 text-blue-500" />
             </div>
             <h2 className="text-3xl font-extrabold mb-4 text-gray-900">Professional PDF Editing</h2>
-            <p className="text-gray-500 mb-10 max-w-md mx-auto text-lg leading-relaxed">Simply upload your document and click anywhere to add high-fidelity text annotations.</p>
+            <p className="text-gray-500 mb-10 max-w-md mx-auto text-lg leading-relaxed">Upload your document and click anywhere to add high-fidelity text annotations.</p>
             <label className="inline-flex items-center px-10 py-5 bg-blue-600 text-white text-xl font-bold rounded-2xl cursor-pointer hover:bg-blue-700 shadow-xl shadow-blue-200 transform hover:-translate-y-1 transition-all">
-              <FileUp className="w-7 h-7 mr-3" />
-              Start Annotating
+              <FileUp className="w-7 h-7 mr-3" />Start Annotating
               <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} />
             </label>
           </div>
@@ -313,8 +285,7 @@ const App = () => {
         <footer className="bg-white border-t border-gray-100 py-3 px-6 text-center text-xs text-gray-400 flex items-center justify-center space-x-8">
           <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Click</kbd> Add Text</div>
           <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Double Click</kbd> Edit</div>
-          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Ctrl+C/V</kbd> Copy/Paste</div>
-          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Del</kbd> Remove</div>
+          <div className="flex items-center"><kbd className="px-1.5 py-0.5 bg-gray-50 border rounded-md mr-1.5 text-gray-500 font-bold">Drag</kbd> Move</div>
         </footer>
       )}
     </div>
