@@ -1,11 +1,12 @@
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { TextOverlay, PdfDocumentInfo } from '../types';
 import TextBox from './TextBox';
 import { exportPdfWithAnnotations } from '../services/pdfService';
 
-const PDFJS_VERSION = '5.4.530';
+// Consistent version across library and worker
+const PDFJS_VERSION = '4.10.38';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
 
 interface Props {
@@ -25,13 +26,11 @@ const PdfEditor: React.FC<Props> = ({ pdfInfo, triggerExport, onExportStart, onE
   
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate ideal scale based on container width
   useEffect(() => {
     const updateScale = () => {
       if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth - 64; // padding
-        // Aim for a comfortable width around 800-1000px, but shrink if needed
-        const newScale = Math.min(1.5, Math.max(0.5, containerWidth / 600));
+        const containerWidth = containerRef.current.clientWidth - 48;
+        const newScale = Math.min(1.5, Math.max(0.6, containerWidth / 800));
         setRenderScale(newScale);
       }
     };
@@ -45,9 +44,8 @@ const PdfEditor: React.FC<Props> = ({ pdfInfo, triggerExport, onExportStart, onE
     let active = true;
     const loadPdf = async () => {
       try {
-        const bytesCopy = pdfInfo.bytes.slice(0);
         const loadingTask = pdfjsLib.getDocument({ 
-          data: bytesCopy,
+          data: pdfInfo.bytes,
           cMapUrl: `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/cmaps/`,
           cMapPacked: true,
         });
@@ -142,7 +140,7 @@ const PdfEditor: React.FC<Props> = ({ pdfInfo, triggerExport, onExportStart, onE
     return (
       <div className="flex-1 flex flex-col items-center justify-center space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-gray-500 font-medium animate-pulse">Initializing PDF Engine...</p>
+        <p className="text-gray-500 font-medium">Initializing PDF Engine...</p>
       </div>
     );
   }

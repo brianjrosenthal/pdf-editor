@@ -3,11 +3,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PDF Text Annotator Pro</title>
+    
+    <!-- Professional Metadata -->
+    <meta name="description" content="Professional PDF Annotation Tool - Add text and signatures easily.">
+    <meta name="theme-color" content="#2563eb">
+
     <!-- Tailwind Play CDN with configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Suppress the production warning by providing a formal configuration
         tailwind.config = {
             theme: {
                 extend: {
@@ -20,13 +26,18 @@
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&family=Playfair+Display&display=swap" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
     <style type="text/css">
-        /* Base styles that don't depend on Tailwind JS being loaded */
         body {
             background-color: #f3f4f6;
             margin: 0;
             overflow: hidden;
+            font-family: 'Inter', sans-serif;
         }
         #root {
             height: 100vh;
@@ -47,9 +58,9 @@
         }
         .text-box-item {
             pointer-events: all;
-            touch-action: none; /* Prevents scrolling while dragging on touch devices */
+            touch-action: none;
         }
-        /* Custom scrollbar for better professional feel */
+        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -65,20 +76,25 @@
             background: #9ca3af;
         }
     </style>
-<script type="importmap">
+
+    <script type="importmap">
 {
   "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@0.563.0",
-    "react/": "https://esm.sh/react@19.2.4/",
-    "react": "https://esm.sh/react@19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@19.2.4/",
-    "pdfjs-dist": "https://esm.sh/pdfjs-dist@5.4.530",
-    "pdf-lib": "https://esm.sh/pdf-lib@1.17.1"
+    "lucide-react": "https://esm.sh/lucide-react@0.469.0",
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "pdfjs-dist": "https://esm.sh/pdfjs-dist@4.10.38",
+    "pdf-lib": "https://esm.sh/pdf-lib@1.17.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- CRITICAL: Entry point script for the React application -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
