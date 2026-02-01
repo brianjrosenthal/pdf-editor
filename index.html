@@ -6,14 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PDF Text Annotator Pro</title>
     
-    <!-- Professional Metadata -->
-    <meta name="description" content="Professional PDF Annotation Tool - Add text and signatures easily.">
+    <meta name="description" content="Professional PDF Annotation Tool">
     <meta name="theme-color" content="#2563eb">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Use a stable, specific version of Babel Standalone to avoid internal environment detection bugs -->
+    <!-- Babel Standalone (Stable Version) -->
     <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     
     <script>
@@ -29,17 +28,14 @@
             }
         };
 
-        // Force Babel to treat modules correctly and avoid the "esmodules" boolean error
-        // This configuration is picked up by Babel when processing type="text/babel"
+        // Explicitly prevent CommonJS transformation
         window.babelConfig = {
             presets: [
-                ['env', { 
-                    modules: false, 
-                    targets: { esmodules: true } 
-                }],
+                ['env', { modules: false }],
                 'typescript',
                 'react'
-            ]
+            ],
+            sourceType: "module"
         };
     </script>
 
@@ -63,10 +59,10 @@
     <script type="importmap">
 {
   "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@0.469.0",
     "react": "https://esm.sh/react@19.0.0",
     "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.469.0",
     "pdfjs-dist": "https://esm.sh/pdfjs-dist@4.10.38",
     "pdf-lib": "https://esm.sh/pdf-lib@1.17.1",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
@@ -80,20 +76,15 @@
         <div class="flex items-center justify-center h-full text-gray-400">
             <div class="text-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p class="text-sm font-medium">Bootstrapping Annotator Engine...</p>
-                <p class="text-xs text-gray-400 mt-2">Transpiling assets for your environment</p>
+                <p class="text-sm font-medium">Bootstrapping Annotator...</p>
             </div>
         </div>
     </div>
     
-    <!-- 
-      type="text/babel" bypasses strict MIME type checking because Babel fetches the file as plain text.
-      data-type="module" allows using 'import' statements inside the TSX file.
-    -->
+    <!-- Single entry point for all logic to ensure perfect transpilation -->
     <script 
         type="text/babel" 
         data-type="module"
-        data-presets="env,typescript,react"
         src="./index.tsx">
     </script>
 </body>
