@@ -1,15 +1,12 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { TextOverlay, PdfDocumentInfo, FontType } from '../types';
+import { TextOverlay, PdfDocumentInfo } from '../types';
 import TextBox from './TextBox';
 import { exportPdfWithAnnotations } from '../services/pdfService';
 
 const PDFJS_VERSION = '5.4.530';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
-
-// Visual scale for the editor
-const RENDER_SCALE = 1.5;
 
 interface Props {
   pdfInfo: PdfDocumentInfo;
@@ -24,8 +21,25 @@ const PdfEditor: React.FC<Props> = ({ pdfInfo, triggerExport, onExportStart, onE
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<TextOverlay | null>(null);
+  const [renderScale, setRenderScale] = useState(1.5);
   
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate ideal scale based on container width
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth - 64; // padding
+        // Aim for a comfortable width around 800-1000px, but shrink if needed
+        const newScale = Math.min(1.5, Math.max(0.5, containerWidth / 600));
+        setRenderScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -136,7 +150,7 @@ const PdfEditor: React.FC<Props> = ({ pdfInfo, triggerExport, onExportStart, onE
   return (
     <div 
       ref={containerRef}
-      className="flex-1 overflow-auto bg-gray-200 p-8 flex flex-col items-center space-y-12"
+      className="flex-1 overflow-auto bg-gray-200 p-4 md:p-8 flex flex-col items-center space-y-12"
       onClick={() => setSelectedId(null)}
     >
       {Array.from({ length: numPages }).map((_, i) => (
@@ -150,7 +164,7 @@ const PdfEditor: React.FC<Props> = ({ pdfInfo, triggerExport, onExportStart, onE
           deleteOverlay={deleteOverlay}
           selectedId={selectedId}
           setSelectedId={setSelectedId}
-          scale={RENDER_SCALE}
+          scale={renderScale}
         />
       ))}
     </div>
@@ -188,7 +202,7 @@ const PageItem: React.FC<PageItemProps> = ({
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext('2d', { alpha: false });
         if (!context) return;
 
         canvas.height = viewport.height;
@@ -202,7 +216,6 @@ const PageItem: React.FC<PageItemProps> = ({
         const renderContext = {
           canvasContext: context,
           viewport: viewport,
-          enableWebGL: true,
         };
 
         renderTaskRef.current = page.render(renderContext);
@@ -236,7 +249,7 @@ const PageItem: React.FC<PageItemProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`pdf-canvas-container bg-white relative transition-all duration-300 ${isRendered ? 'opacity-100' : 'opacity-0'}`}
+      className={`pdf-canvas-container bg-white relative transition-opacity duration-300 ${isRendered ? 'opacity-100' : 'opacity-0'}`}
       style={{ 
         width: dimensions.width || 'auto', 
         height: dimensions.height || 'auto',
@@ -260,7 +273,7 @@ const PageItem: React.FC<PageItemProps> = ({
           ))}
         </div>
       )}
-      <div className="absolute -top-6 left-0 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+      <div className="absolute -top-7 left-0 px-2 py-0.5 bg-gray-800 text-white text-[10px] font-bold uppercase rounded-t-sm">
         Page {pageNumber}
       </div>
     </div>

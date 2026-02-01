@@ -6,7 +6,7 @@ import { TextOverlay, FontType } from '../types';
 interface Props {
   overlay: TextOverlay;
   isSelected: boolean;
-  onSelect: (e: React.MouseEvent) => void;
+  onSelect: (e: React.MouseEvent | React.TouchEvent) => void;
   onUpdate: (updates: Partial<TextOverlay>) => void;
   onDelete: () => void;
   containerDimensions: { width: number, height: number };
@@ -22,6 +22,7 @@ const TextBox: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [tempText, setTempText] = useState(overlay.text);
   const dragStartRef = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
+  const rafRef = useRef<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -37,44 +38,81 @@ const TextBox: React.FC<Props> = ({
     }
   }, []);
 
+  const startDrag = (clientX: number, clientY: number) => {
+    if (isEditing) return;
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: clientX,
+      y: clientY,
+      startX: overlay.x,
+      startY: overlay.y
+    };
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isEditing) return;
     if ((e.target as HTMLElement).closest('button')) return;
 
     onSelect(e);
-    setIsDragging(true);
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      startX: overlay.x,
-      startY: overlay.y
-    };
+    startDrag(e.clientX, e.clientY);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    const dx = ((e.clientX - dragStartRef.current.x) / containerDimensions.width) * 100;
-    const dy = ((e.clientY - dragStartRef.current.y) / containerDimensions.height) * 100;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (isEditing) return;
+    if ((e.target as HTMLElement).closest('button')) return;
 
-    onUpdate({
-      x: Math.min(Math.max(0, dragStartRef.current.startX + dx), 95),
-      y: Math.min(Math.max(2, dragStartRef.current.startY + dy), 100),
+    onSelect(e);
+    const touch = e.touches[0];
+    startDrag(touch.clientX, touch.clientY);
+  };
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (!isDragging) return;
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+    rafRef.current = requestAnimationFrame(() => {
+      const dx = ((clientX - dragStartRef.current.x) / containerDimensions.width) * 100;
+      const dy = ((clientY - dragStartRef.current.y) / containerDimensions.height) * 100;
+
+      onUpdate({
+        x: Math.min(Math.max(0, dragStartRef.current.startX + dx), 95),
+        y: Math.min(Math.max(2, dragStartRef.current.startY + dy), 100),
+      });
     });
   }, [isDragging, containerDimensions, onUpdate]);
 
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    handleMove(e.clientX, e.clientY);
+  }, [handleMove]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (e.cancelable) e.preventDefault();
+    const touch = e.touches[0];
+    handleMove(touch.clientX, touch.clientY);
+  }, [handleMove]);
+
+  const handleEnd = useCallback(() => {
+    setIsDragging(false);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  }, []);
 
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleTouchMove, handleEnd]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -96,11 +134,7 @@ const TextBox: React.FC<Props> = ({
   };
 
   const showControls = isSelected || isEditing;
-
-  // Visual font size must be scaled by the PDF render scale
   const visualFontSize = overlay.fontSize * scale;
-  
-  // padding (8px) + border (2px)
   const paddingOffset = 10; 
 
   return (
@@ -109,25 +143,22 @@ const TextBox: React.FC<Props> = ({
       style={{
         left: `${overlay.x}%`,
         top: `${overlay.y}%`,
-        // Anchor to baseline.
-        // We use translateY(-100%) to put the bottom of the box at the coordinate,
-        // then shift it down by the internal vertical padding/border to hit the baseline.
         transform: `translateY(calc(-100% + ${paddingOffset}px))`, 
         fontSize: `${visualFontSize}px`,
         ...getFontStyle(),
         color: overlay.color,
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       onDoubleClick={(e) => { 
         e.stopPropagation(); 
         setIsEditing(true); 
-        onSelect(e); 
       }}
     >
       <div 
         className={`relative min-w-[60px] p-2 border-2 rounded transition-all flex items-start
           ${showControls ? 'border-blue-500 bg-white shadow-xl ring-2 ring-blue-100' : 'border-transparent group-hover:border-blue-300 group-hover:bg-white/60'}
-          ${isDragging ? 'cursor-grabbing opacity-80' : 'cursor-grab'}
+          ${isDragging ? 'cursor-grabbing opacity-80 scale-105' : 'cursor-grab'}
         `}
       >
         {isEditing ? (
@@ -204,6 +235,7 @@ const TextBox: React.FC<Props> = ({
             e.stopPropagation(); 
             onDelete(); 
           }}
+          aria-label="Remove text box"
         >
           <X className="w-3 h-3 stroke-[3]" />
         </button>

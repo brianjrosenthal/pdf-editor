@@ -5,16 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Text Annotator Pro</title>
+    <!-- Tailwind Play CDN with configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Roboto Mono', 'monospace'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&family=Playfair+Display&display=swap" rel="stylesheet">
-    <style>
+    <style type="text/css">
+        /* Base styles that don't depend on Tailwind JS being loaded */
         body {
-            font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
+            margin: 0;
+            overflow: hidden;
+        }
+        #root {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         .pdf-canvas-container {
             position: relative;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
         .text-overlay-layer {
             position: absolute;
@@ -26,6 +47,22 @@
         }
         .text-box-item {
             pointer-events: all;
+            touch-action: none; /* Prevents scrolling while dragging on touch devices */
+        }
+        /* Custom scrollbar for better professional feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
         }
     </style>
 <script type="importmap">
